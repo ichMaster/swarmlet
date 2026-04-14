@@ -336,8 +336,10 @@ class Parser:
         k = self.peek_kind()
         if k in ("NUMBER", "IDENT", "(", "true", "false"):
             return True
-        # Keywords that are used as built-in function names shouldn't start atoms
-        # in all contexts, but identifiers like state names can
+        # Keywords used as builtin function names or state names in arguments
+        if k in ("moore", "neumann", "radius", "forward", "back", "left", "right",
+                  "field", "state", "cell", "agent", "die", "stay"):
+            return True
         return False
 
     def _parse_postfix(self) -> Any:
@@ -383,8 +385,9 @@ class Parser:
             return A.Var(name=tok.value, line=tok.line)
 
         # Keywords that can appear as identifiers in expression context
-        # (e.g., state names like "moore", "neumann" used as function arguments)
-        if tok.kind in ("moore", "neumann", "radius", "forward", "back", "left", "right"):
+        # (builtin function names and neighborhood selectors)
+        if tok.kind in ("moore", "neumann", "radius", "forward", "back", "left", "right",
+                         "field", "state", "cell", "agent", "die", "stay"):
             self.pos += 1
             return A.Var(name=tok.value, line=tok.line)
 
