@@ -29,6 +29,7 @@ KEYWORDS = frozenset({
     "and", "or", "not", "mod",
     "moore", "neumann", "radius",
     "forward", "back", "left", "right",
+    "_",
 })
 
 # Two-character operators (checked before single-char)
