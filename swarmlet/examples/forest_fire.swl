@@ -1,0 +1,19 @@
+# Forest fire model
+# Trees grow, catch fire from neighbors, fire burns out
+
+world 20 x 20 wrap
+cell states Empty | Tree | Fire
+
+param p_grow = 0.01
+param p_fire = 0.0001
+
+let cell Fire = Empty
+let cell Tree =
+    if any Fire then Fire
+    else if random () < p_fire then Fire
+    else Tree
+let cell Empty =
+    if random () < p_grow then Tree
+    else Empty
+
+init cell = Tree
