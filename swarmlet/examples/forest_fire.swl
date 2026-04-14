@@ -1,19 +1,31 @@
-# Forest fire model
-# Trees grow, catch fire from neighbors, fire burns out
+# Drossel-Schwabl forest fire model.
+# Trees grow on empty cells, occasionally ignite, and burn to ash.
+# Ash slowly clears back to empty.
 
-world 20 x 20 wrap
-cell states Empty | Tree | Fire
+world 100 x 100 wrap
 
-param p_grow = 0.01
-param p_fire = 0.0001
+cell states Empty | Tree | Fire | Ash
 
-let cell Fire = Empty
-let cell Tree =
-    if any Fire then Fire
-    else if random () < p_fire then Fire
-    else Tree
+param growth_rate     = 0.001
+param ignition_rate   = 0.00005
+param ash_clear_rate  = 0.02
+
 let cell Empty =
-    if random () < p_grow then Tree
-    else Empty
+  let grow = random () < growth_rate in
+  if grow then Tree else Empty
 
-init cell = Tree
+let cell Tree =
+  let spark = random () < ignition_rate in
+  if any Fire then Fire
+  else if spark then Fire
+  else Tree
+
+let cell Fire = Ash
+
+let cell Ash =
+  let clear = random () < ash_clear_rate in
+  if clear then Empty else Ash
+
+init cell =
+  let r = random () in
+  if r < 0.5 then Tree else Empty
