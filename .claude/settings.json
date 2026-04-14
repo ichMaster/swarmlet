@@ -47,7 +47,12 @@
       "Skill(update-config:*)",
       "Skill(implement-phase)",
       "Skill(implement-phase:*)",
-      "Edit(/.claude/skills/implement-phase/**)"
+      "Edit(/.claude/skills/implement-phase/**)",
+      "mcp__github"
+    ],
+    "additionalDirectories": [
+      "/Users/Vitalii_Bondarenko2/development/swarmlet/.claude"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true
 }

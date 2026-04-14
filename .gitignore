@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# MCP server config (contains machine-specific auth commands)
+.mcp.json
+
+# Claude Code local overrides
+.claude/settings.local.json

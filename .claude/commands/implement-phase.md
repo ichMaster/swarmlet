@@ -1,8 +1,6 @@
 ---
-name: implement-phase
 description: Implement all GitHub issues for a specific phase of the Swarmlet project. Fetches issues by phase label, then implements each one sequentially — coding, testing, fixing, committing, pushing, and closing. Manages product version as MAJOR.STAGE.PHASE.
 argument-hint: "[phase-number] [--stage N] [--major N]"
-disable-model-invocation: true
 ---
 
 # Implement Phase $ARGUMENTS
@@ -82,13 +80,8 @@ Map the phase number to the GitHub label:
 
 ## Step 0 — Fetch issues
 
-Use the phase label from the mapping above and fetch all open issues for this phase. Use the GitHub MCP tool `mcp__github__list_issues` with:
-- `owner`: `ichMaster`
-- `repo`: `swarmlet`
-- `labels`: the phase label (e.g., `["phase:1-foundation"]`)
-- `state`: `open`
+Use the phase label from the mapping above and fetch all open issues for this phase. Run via Bash:
 
-Alternatively, run via Bash:
 ```bash
 gh issue list --repo ichMaster/swarmlet --label "<phase-label>" --state open --json number,title,body --limit 50
 ```
