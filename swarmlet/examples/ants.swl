@@ -1,0 +1,49 @@
+# Classic ant colony optimization on a grid.
+# Ants wander, find food, return home laying pheromone.
+# Other ants follow the pheromone gradient toward food.
+
+world 80 x 80 wrap
+
+cell states Empty | Food | Nest
+field pheromone = 0.0
+
+param evaporation = 0.98
+param deposit     = 1.0
+
+agent Ant {
+  carrying = 0,
+  heading  = 0
+}
+
+# Pheromone evaporates everywhere on every tick.
+let cell _ =
+  seq {
+    set pheromone = field pheromone * evaporation
+  }
+
+let agent Ant =
+  seq {
+    if cell_state == Food and self.carrying == 0
+      then set carrying = 1
+      else stay;
+
+    if self.carrying == 1 and cell_state == Nest
+      then set carrying = 0
+      else stay;
+
+    if self.carrying == 1
+      then set pheromone = cell_field pheromone + deposit
+      else stay;
+
+    if self.carrying == 0
+      then move (argmax_neighbor pheromone)
+      else move (random_dir ())
+  }
+
+init cell =
+  let r = random () in
+  if r < 0.02 then Food
+  else if r < 0.025 then Nest
+  else Empty
+
+init agent Ant 200
