@@ -209,13 +209,343 @@ def _eval_unop(node: A.UnOp, ctx: ExprContext) -> Any:
 
 def _eval_call(node: A.Call, ctx: ExprContext) -> Any:
     name = node.func
+    args = [eval_expr(a, ctx) for a in node.args]
+
+    # Try world-context builtins first
+    result = _try_world_builtin(name, args, ctx, node.line)
+    if result is not _SENTINEL:
+        return result
+
     if name in BUILTINS:
         spec = BUILTINS[name]
         bctx = ctx.builtin_ctx or EvalContext(rng=ctx.rng)
-        args = [eval_expr(a, ctx) for a in node.args]
         return spec.func(bctx, *args)
-    # Could be a user-defined function or unresolved — error
     raise SwarmletRuntimeError(f"unknown function '{name}'", line=node.line)
+
+
+_SENTINEL = object()
+
+
+def _try_world_builtin(name: str, args: list, ctx: ExprContext, line: int) -> Any:
+    """Try to evaluate a world-context builtin. Returns _SENTINEL if not handled."""
+    w = ctx.world
+    if w is None:
+        return _SENTINEL
+
+    xy = ctx.cell_xy
+    if xy is None:
+        return _SENTINEL
+    cx, cy = xy
+
+    # --- Cell context builtins (section 6.2) ---
+    if name == "state":
+        return w.get_state(cx, cy)
+    if name == "field" and len(args) == 1:
+        return w.get_field(cx, cy, str(args[0]))
+    if name == "count" and len(args) >= 1:
+        target = str(args[0])
+        return _count_neighbors(w, cx, cy, target, "moore")
+    if name == "count_in" and len(args) >= 2:
+        target = str(args[0])
+        return _count_neighbors(w, cx, cy, target, args[1])
+    if name == "any" and len(args) >= 1:
+        return _count_neighbors(w, cx, cy, str(args[0]), "moore") > 0
+    if name == "sum_field" and len(args) >= 1:
+        return _sum_field_neighbors(w, cx, cy, str(args[0]), "moore")
+    if name == "sum_field_in" and len(args) >= 2:
+        return _sum_field_neighbors(w, cx, cy, str(args[0]), args[1])
+    if name == "mean_field" and len(args) >= 1:
+        return _mean_field_neighbors(w, cx, cy, str(args[0]), "moore")
+    if name == "max_field" and len(args) >= 1:
+        return _extremum_field(w, cx, cy, str(args[0]), "moore", max)
+    if name == "min_field" and len(args) >= 1:
+        return _extremum_field(w, cx, cy, str(args[0]), "moore", min)
+    if name == "laplacian" and len(args) >= 1:
+        return _laplacian(w, cx, cy, str(args[0]))
+    if name == "neighbor" and len(args) >= 2:
+        return w.get_state(cx + int(args[0]), cy + int(args[1]))
+    if name == "neighbor_field" and len(args) >= 3:
+        return w.get_field(cx + int(args[0]), cy + int(args[1]), str(args[2]))
+    if name == "distance_to" and len(args) >= 1:
+        return _distance_to(w, cx, cy, str(args[0]))
+    if name == "gradient_to" and len(args) >= 1:
+        return _gradient_to(w, cx, cy, str(args[0]))
+
+    # --- Agent context builtins (section 6.3) ---
+    agent = ctx.agent
+    if name == "self" and agent is not None:
+        return agent
+    if name == "cell_state" and agent is not None:
+        return w.get_state(agent.x, agent.y)
+    if name == "cell_field" and len(args) >= 1 and agent is not None:
+        return w.get_field(agent.x, agent.y, str(args[0]))
+    if name == "look" and len(args) >= 2 and agent is not None:
+        return w.get_state(agent.x + int(args[0]), agent.y + int(args[1]))
+    if name == "look_field" and len(args) >= 3 and agent is not None:
+        return w.get_field(agent.x + int(args[0]), agent.y + int(args[1]), str(args[2]))
+    if name == "agents_in_radius" and len(args) >= 1 and agent is not None:
+        return _agents_in_radius(w, agent, int(args[0]))
+    if name == "agents_of_type_in_radius" and len(args) >= 2 and agent is not None:
+        return _agents_of_type_in_radius(w, agent, str(args[0]), int(args[1]))
+    if name == "nearest_agent_dir" and len(args) >= 1 and agent is not None:
+        return _nearest_agent_dir(w, agent, int(args[0]))
+    if name == "nearest_agent_of_type_dir" and len(args) >= 2 and agent is not None:
+        return _nearest_agent_of_type_dir(w, agent, str(args[0]), int(args[1]))
+    if name == "argmax_neighbor" and len(args) >= 1 and agent is not None:
+        return _argmax_neighbor(w, agent.x, agent.y, str(args[0]))
+    if name == "argmin_neighbor" and len(args) >= 1 and agent is not None:
+        return _argmin_neighbor(w, agent.x, agent.y, str(args[0]))
+    if name == "mean_heading_in_radius" and len(args) >= 1 and agent is not None:
+        return _mean_heading_in_radius(w, agent, int(args[0]))
+    if name == "min_in_radius" and len(args) >= 2 and agent is not None:
+        return _min_in_radius(w, agent.x, agent.y, str(args[0]), int(args[1]))
+    if name == "max_in_radius" and len(args) >= 2 and agent is not None:
+        return _max_in_radius(w, agent.x, agent.y, str(args[0]), int(args[1]))
+
+    return _SENTINEL
+
+
+# ---------------------------------------------------------------------------
+# Neighborhood helpers
+# ---------------------------------------------------------------------------
+
+_MOORE_OFFSETS = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+_NEUMANN_OFFSETS = [(0, -1), (-1, 0), (1, 0), (0, 1)]
+
+
+def _get_offsets(neighborhood):
+    if neighborhood == "moore":
+        return _MOORE_OFFSETS
+    if neighborhood == "neumann":
+        return _NEUMANN_OFFSETS
+    # radius N
+    if isinstance(neighborhood, (int, float)):
+        r = int(neighborhood)
+        return [(dx, dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
+                if (dx, dy) != (0, 0) and max(abs(dx), abs(dy)) <= r]
+    return _MOORE_OFFSETS
+
+
+def _count_neighbors(w, cx, cy, target_state, neighborhood):
+    count = 0
+    for dx, dy in _get_offsets(neighborhood):
+        s = w.get_state(cx + dx, cy + dy)
+        if s == target_state:
+            count += 1
+    return count
+
+
+def _sum_field_neighbors(w, cx, cy, fname, neighborhood):
+    total = 0.0
+    for dx, dy in _get_offsets(neighborhood):
+        total += w.get_field(cx + dx, cy + dy, fname)
+    return total
+
+
+def _mean_field_neighbors(w, cx, cy, fname, neighborhood):
+    offsets = _get_offsets(neighborhood)
+    if not offsets:
+        return 0.0
+    return _sum_field_neighbors(w, cx, cy, fname, neighborhood) / len(offsets)
+
+
+def _extremum_field(w, cx, cy, fname, neighborhood, fn):
+    vals = [w.get_field(cx + dx, cy + dy, fname) for dx, dy in _get_offsets(neighborhood)]
+    return fn(vals) if vals else 0.0
+
+
+def _laplacian(w, cx, cy, fname):
+    """9-point stencil: center -1, orthogonal 0.2, diagonal 0.05."""
+    center = w.get_field(cx, cy, fname)
+    result = -center
+    for dx, dy in _NEUMANN_OFFSETS:
+        result += 0.2 * w.get_field(cx + dx, cy + dy, fname)
+    for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+        result += 0.05 * w.get_field(cx + dx, cy + dy, fname)
+    return result
+
+
+def _distance_to(w, cx, cy, target_state):
+    """Chebyshev distance to nearest cell in state, search radius 16."""
+    for r in range(1, 17):
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if max(abs(dx), abs(dy)) == r:
+                    s = w.get_state(cx + dx, cy + dy)
+                    if s == target_state:
+                        return r
+    return -1
+
+
+def _gradient_to(w, cx, cy, target_state):
+    """Direction toward nearest cell in target state, radius 16."""
+    from swarmlet.builtins import DIRECTIONS, STAY
+    best_dist = 999
+    best_dir = STAY
+    for r in range(1, 17):
+        if r > best_dist:
+            break
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if max(abs(dx), abs(dy)) != r:
+                    continue
+                s = w.get_state(cx + dx, cy + dy)
+                if s == target_state:
+                    dist = max(abs(dx), abs(dy))
+                    if dist < best_dist:
+                        best_dist = dist
+                        # Quantize direction
+                        import math
+                        angle = math.atan2(dy, dx)
+                        idx = round(angle / (math.pi / 4)) % 8
+                        best_dir = idx
+    return best_dir
+
+
+# ---------------------------------------------------------------------------
+# Agent context helpers
+# ---------------------------------------------------------------------------
+
+def _agents_in_radius(w, agent, radius):
+    count = 0
+    for other in w.agents:
+        if other.id == agent.id or not other.alive:
+            continue
+        dx = abs(other.x - agent.x)
+        dy = abs(other.y - agent.y)
+        if w.topology == "wrap":
+            dx = min(dx, w.width - dx)
+            dy = min(dy, w.height - dy)
+        if max(dx, dy) <= radius:
+            count += 1
+    return count
+
+
+def _agents_of_type_in_radius(w, agent, target_type, radius):
+    count = 0
+    for other in w.agents:
+        if other.id == agent.id or not other.alive:
+            continue
+        if other.agent_type != target_type:
+            continue
+        dx = abs(other.x - agent.x)
+        dy = abs(other.y - agent.y)
+        if w.topology == "wrap":
+            dx = min(dx, w.width - dx)
+            dy = min(dy, w.height - dy)
+        if max(dx, dy) <= radius:
+            count += 1
+    return count
+
+
+def _nearest_agent_dir(w, agent, radius):
+    return _nearest_dir_impl(w, agent, radius, None)
+
+
+def _nearest_agent_of_type_dir(w, agent, target_type, radius):
+    return _nearest_dir_impl(w, agent, radius, target_type)
+
+
+def _nearest_dir_impl(w, agent, radius, target_type):
+    import math
+    best_dist = 999
+    best_dx, best_dy = 0, 0
+    for other in w.agents:
+        if other.id == agent.id or not other.alive:
+            continue
+        if target_type and other.agent_type != target_type:
+            continue
+        dx = other.x - agent.x
+        dy = other.y - agent.y
+        if w.topology == "wrap":
+            if abs(dx) > w.width // 2:
+                dx = dx - w.width if dx > 0 else dx + w.width
+            if abs(dy) > w.height // 2:
+                dy = dy - w.height if dy > 0 else dy + w.height
+        dist = max(abs(dx), abs(dy))
+        if dist <= radius and dist < best_dist:
+            best_dist = dist
+            best_dx, best_dy = dx, dy
+    if best_dist == 999:
+        return STAY
+    angle = math.atan2(best_dy, best_dx)
+    return round(angle / (math.pi / 4)) % 8
+
+
+def _argmax_neighbor(w, cx, cy, fname):
+    best_val = float("-inf")
+    best_dir = STAY
+    from swarmlet.builtins import DIRECTIONS
+    for i, (dx, dy) in enumerate(DIRECTIONS):
+        val = w.get_field(cx + dx, cy + dy, fname)
+        if val > best_val:
+            best_val = val
+            best_dir = i
+    return best_dir
+
+
+def _argmin_neighbor(w, cx, cy, fname):
+    best_val = float("inf")
+    best_dir = STAY
+    from swarmlet.builtins import DIRECTIONS
+    for i, (dx, dy) in enumerate(DIRECTIONS):
+        val = w.get_field(cx + dx, cy + dy, fname)
+        if val < best_val:
+            best_val = val
+            best_dir = i
+    return best_dir
+
+
+def _mean_heading_in_radius(w, agent, radius):
+    import math
+    sx, sy = 0.0, 0.0
+    count = 0
+    for other in w.agents:
+        if other.id == agent.id or not other.alive:
+            continue
+        if "heading" not in other.fields:
+            continue
+        dx = abs(other.x - agent.x)
+        dy = abs(other.y - agent.y)
+        if w.topology == "wrap":
+            dx = min(dx, w.width - dx)
+            dy = min(dy, w.height - dy)
+        if max(dx, dy) <= radius:
+            h = other.fields["heading"]
+            angle = h * math.pi / 4
+            sx += math.cos(angle)
+            sy += math.sin(angle)
+            count += 1
+    if count == 0:
+        return STAY
+    avg_angle = math.atan2(sy, sx)
+    return round(avg_angle / (math.pi / 4)) % 8
+
+
+def _min_in_radius(w, cx, cy, fname, radius):
+    best = float("inf")
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            if (dx, dy) == (0, 0):
+                continue
+            if max(abs(dx), abs(dy)) <= radius:
+                val = w.get_field(cx + dx, cy + dy, fname)
+                if val < best:
+                    best = val
+    return best if best != float("inf") else 0.0
+
+
+def _max_in_radius(w, cx, cy, fname, radius):
+    best = float("-inf")
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            if (dx, dy) == (0, 0):
+                continue
+            if max(abs(dx), abs(dy)) <= radius:
+                val = w.get_field(cx + dx, cy + dy, fname)
+                if val > best:
+                    best = val
+    return best if best != float("-inf") else 0.0
 
 
 def _eval_dot(node: A.Dot, ctx: ExprContext) -> Any:
