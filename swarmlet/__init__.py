@@ -1,6 +1,6 @@
 """Swarmlet — a small functional language for simulating cellular automata and agent-based swarms."""
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 from swarmlet.errors import SwarmletError, SwarmletStaticError, SwarmletRuntimeError
 
