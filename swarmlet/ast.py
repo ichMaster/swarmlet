@@ -255,6 +255,18 @@ class CellSeq:
 
 
 @dataclass(frozen=True)
+class CellLetSeq:
+    """let name = expr in seq { ... } — a let binding wrapping a cell seq."""
+    name: str
+    value: Any
+    body: Any  # CellSeq or nested CellLetSeq
+    line: int = 0
+
+    def __repr__(self) -> str:
+        return f"CellLetSeq({self.name}, {self.value}, {self.body})"
+
+
+@dataclass(frozen=True)
 class CellExpr:
     """A plain expression used as a cell body (returns new state)."""
     expr: Any
@@ -331,6 +343,18 @@ class ASet:
 
     def __repr__(self) -> str:
         return f"ASet({self.field_name}, {self.expr})"
+
+
+@dataclass(frozen=True)
+class ALetIn:
+    """let name = expr in action — bind a value for use in an action."""
+    name: str
+    value: Any
+    body: Any  # an action node
+    line: int = 0
+
+    def __repr__(self) -> str:
+        return f"ALetIn({self.name}, {self.value}, {self.body})"
 
 
 @dataclass(frozen=True)

@@ -1,0 +1,33 @@
+# Discretized Boids: separation and alignment on a grid.
+# Cohesion is implicit in the toroidal world.
+
+world 80 x 80 wrap
+
+cell states Empty
+
+param vision          = 3
+param crowd_threshold = 5
+
+agent Bird {
+  heading = 0
+}
+
+let agent Bird =
+  let crowd = agents_in_radius vision in
+  let avg   = mean_heading_in_radius vision in
+  seq {
+    # Separation: too many neighbors -> turn 180
+    if crowd > crowd_threshold
+      then set heading = (self.heading + 4) mod 8
+      else stay;
+
+    # Alignment: align with mean heading of nearby flock
+    if crowd > 0 and crowd <= crowd_threshold
+      then set heading = avg
+      else stay;
+
+    move forward
+  }
+
+init cell = Empty
+init agent Bird 120

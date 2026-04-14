@@ -206,6 +206,35 @@ class World:
             agent=agent,
         )
 
+    def _exec_cell_body_seq(self, body, ctx, result):
+        """Execute a CellSeq or CellLetSeq."""
+        if isinstance(body, A.CellLetSeq):
+            val = eval_expr(body.value, ctx)
+            child_ctx = ctx.child(locals={body.name: val})
+            self._exec_cell_body_seq(body.body, child_ctx, result)
+        elif isinstance(body, A.CellSeq):
+            for stmt in body.stmts:
+                self._exec_cell_stmt(stmt, ctx, result)
+
+    def _exec_cell_stmt(self, stmt, ctx, result):
+        """Execute a cell statement, updating the result dict."""
+        if isinstance(stmt, A.CellBecome):
+            if stmt.expr is not None:
+                val = eval_expr(stmt.expr, ctx)
+                if isinstance(val, str):
+                    result["state"] = val
+            # expr=None means stay (no-op)
+        elif isinstance(stmt, A.CellSet):
+            val = eval_expr(stmt.expr, ctx)
+            result[stmt.field_name] = float(val)
+        elif isinstance(stmt, tuple) and stmt[0] == "cell_if":
+            _, cond_expr, then_stmt, else_stmt, line = stmt
+            cond = eval_expr(cond_expr, ctx)
+            if cond:
+                self._exec_cell_stmt(then_stmt, ctx, result)
+            else:
+                self._exec_cell_stmt(else_stmt, ctx, result)
+
     # ----- Grid helpers -----
 
     def get_state(self, x: int, y: int) -> Optional[str]:
@@ -266,21 +295,13 @@ class World:
                     result = eval_expr(body.expr, ctx)
                     if isinstance(result, str) and result in self.state_to_idx:
                         next_states[y, x] = self.state_to_idx[result]
-                elif isinstance(body, A.CellSeq):
-                    new_state = state_name
-                    new_fields = {}
-                    for stmt in body.stmts:
-                        if isinstance(stmt, A.CellBecome):
-                            result = eval_expr(stmt.expr, ctx)
-                            if isinstance(result, str):
-                                new_state = result
-                        elif isinstance(stmt, A.CellSet):
-                            val = eval_expr(stmt.expr, ctx)
-                            new_fields[stmt.field_name] = float(val)
-                    if new_state in self.state_to_idx:
-                        next_states[y, x] = self.state_to_idx[new_state]
-                    for fn, val in new_fields.items():
-                        if fn in next_fields:
+                elif isinstance(body, (A.CellSeq, A.CellLetSeq)):
+                    result = {"state": state_name}
+                    self._exec_cell_body_seq(body, ctx, result)
+                    if result["state"] in self.state_to_idx:
+                        next_states[y, x] = self.state_to_idx[result["state"]]
+                    for fn, val in result.items():
+                        if fn != "state" and fn in next_fields:
                             next_fields[fn][y, x] = val
                 else:
                     # Body is a raw expression (match, if, etc.)
@@ -365,6 +386,10 @@ class World:
                 self._eval_action(node.then_action, ctx, intent, agent_view)
             else:
                 self._eval_action(node.else_action, ctx, intent, agent_view)
+        elif isinstance(node, A.ALetIn):
+            val = eval_expr(node.value, ctx)
+            child_ctx = ctx.child(locals={node.name: val})
+            self._eval_action(node.body, child_ctx, intent, agent_view)
         elif isinstance(node, A.AMatch):
             subject = eval_expr(node.subject, ctx)
             matched = False

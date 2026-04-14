@@ -34,12 +34,22 @@ class Parser:
         self.pos += 1
         return tok
 
+    # Keywords that can be used as identifier names in certain contexts
+    _IDENT_KEYWORDS = frozenset({
+        "kill", "field", "state", "agent", "cell", "die", "stay",
+        "forward", "back", "left", "right", "moore", "neumann", "radius",
+        "move", "spawn", "set", "become", "seq", "wrap", "bounded",
+    })
+
     def eat_ident(self) -> Token:
         """Eat an IDENT token or a keyword being used as an identifier name."""
         tok = self.peek()
         if tok.kind == "IDENT":
             self.pos += 1
             return tok
+        if tok.kind in self._IDENT_KEYWORDS:
+            self.pos += 1
+            return Token("IDENT", tok.value, tok.line, tok.col)
         self._error(f"expected identifier but got {tok.kind!r}")
 
     def match(self, kind: str) -> Optional[Token]:
@@ -177,8 +187,33 @@ class Parser:
     def parse_cell_body(self) -> Any:
         if self.at("seq"):
             return self.parse_cell_seq()
+        if self.at("let") and not self._is_let_decl():
+            # Parse let chains that may end in a seq block
+            return self._parse_cell_let_chain()
         expr = self.parse_expr()
         return A.CellExpr(expr=expr, line=expr.line if hasattr(expr, "line") else 0)
+
+    def _parse_cell_let_chain(self) -> Any:
+        """Parse let x = expr in <cell_body>. Supports let chains ending in seq."""
+        tok = self.eat("let")
+        name = self.eat_ident().value
+        self.eat("=")
+        value = self.parse_expr()
+        self.eat("in")
+        body = self.parse_cell_body()
+        # Wrap in a CellExpr with a Let whose body evaluates via the cell body mechanism
+        if isinstance(body, A.CellSeq):
+            # We need to wrap the seq in a let context — use a special node
+            return A.CellLetSeq(name=name, value=value, body=body, line=tok.line)
+        elif isinstance(body, A.CellLetSeq):
+            return A.CellLetSeq(name=name, value=value, body=body, line=tok.line)
+        else:
+            # It's a CellExpr — wrap the inner expr in a Let
+            inner = body.expr if isinstance(body, A.CellExpr) else body
+            return A.CellExpr(
+                expr=A.Let(name=name, value=value, body=inner, line=tok.line),
+                line=tok.line,
+            )
 
     def parse_cell_seq(self) -> A.CellSeq:
         tok = self.eat("seq")
@@ -202,14 +237,42 @@ class Parser:
             self.eat("=")
             expr = self.parse_expr()
             return A.CellSet(field_name=name, expr=expr, line=tok.line)
-        self._error("expected 'become' or 'set' in cell seq block")
+        if self.at("stay"):
+            tok = self.eat("stay")
+            return A.CellBecome(expr=None, line=tok.line)  # no-op: don't change state
+        if self.at("if"):
+            # if expr then cell_stmt else cell_stmt
+            tok = self.eat("if")
+            cond = self.parse_expr()
+            self.eat("then")
+            then_stmt = self.parse_cell_stmt()
+            self.eat("else")
+            else_stmt = self.parse_cell_stmt()
+            return ("cell_if", cond, then_stmt, else_stmt, tok.line)
+        self._error("expected 'become', 'set', 'stay', or 'if' in cell seq block")
 
     def parse_agent_rule(self, let_tok: Token) -> A.AgentRule:
         self.eat("agent")
         name = self.eat_ident().value
         self.eat("=")
-        action = self.parse_action()
+        action = self.parse_action_with_lets()
         return A.AgentRule(agent_type=name, body=action, line=let_tok.line)
+
+    def parse_action_with_lets(self) -> Any:
+        """Parse an action that may be preceded by let bindings.
+
+        let name = expr in <action> is syntactic sugar that wraps the
+        action in an AIf-like node. We represent it as a special ALetIn node.
+        """
+        if self.at("let") and not self._is_let_decl():
+            tok = self.eat("let")
+            name = self.eat_ident().value
+            self.eat("=")
+            value = self.parse_expr()
+            self.eat("in")
+            body = self.parse_action_with_lets()
+            return A.ALetIn(name=name, value=value, body=body, line=tok.line)
+        return self.parse_action()
 
     def parse_init_decl(self) -> Any:
         tok = self.eat("init")
@@ -343,9 +406,8 @@ class Parser:
         k = self.peek_kind()
         if k in ("NUMBER", "IDENT", "(", "true", "false"):
             return True
-        # Keywords used as builtin function names or state names in arguments
-        if k in ("moore", "neumann", "radius", "forward", "back", "left", "right",
-                  "field", "state", "cell", "agent", "die", "stay"):
+        # Keywords used as builtin function names or state/param names in arguments
+        if k in self._IDENT_KEYWORDS:
             return True
         return False
 
@@ -393,8 +455,7 @@ class Parser:
 
         # Keywords that can appear as identifiers in expression context
         # (builtin function names and neighborhood selectors)
-        if tok.kind in ("moore", "neumann", "radius", "forward", "back", "left", "right",
-                         "field", "state", "cell", "agent", "die", "stay"):
+        if tok.kind in self._IDENT_KEYWORDS:
             self.pos += 1
             return A.Var(name=tok.value, line=tok.line)
 
@@ -565,11 +626,11 @@ class Parser:
     def parse_action_seq(self) -> A.ASeq:
         tok = self.eat("seq")
         self.eat("{")
-        actions = [self.parse_action()]
+        actions = [self.parse_action_with_lets()]
         while self.match(";"):
             if self.at("}"):
                 break
-            actions.append(self.parse_action())
+            actions.append(self.parse_action_with_lets())
         self.eat("}")
         return A.ASeq(actions=actions, line=tok.line)
 
@@ -577,9 +638,9 @@ class Parser:
         tok = self.eat("if")
         cond = self.parse_expr()
         self.eat("then")
-        then_action = self.parse_action()
+        then_action = self.parse_action_with_lets()
         self.eat("else")
-        else_action = self.parse_action()
+        else_action = self.parse_action_with_lets()
         return A.AIf(cond=cond, then_action=then_action, else_action=else_action, line=tok.line)
 
     def parse_action_match(self) -> A.AMatch:
@@ -611,7 +672,7 @@ class Parser:
         self.eat("->")
         if self.at("match"):
             self._error("nested match must be parenthesized")
-        body = self.parse_action()
+        body = self.parse_action_with_lets()
         return A.ActionCase(patterns=patterns, guard=guard, body=body, line=tok.line)
 
 

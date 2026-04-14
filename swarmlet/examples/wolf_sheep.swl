@@ -1,0 +1,93 @@
+# Wolves chase and kill sheep. Sheep eat grass and flee from wolves.
+# Both reproduce when well-fed and starve when not.
+
+world 100 x 100 wrap
+
+cell states Empty | Grass
+
+field grass_age = 0.0
+
+param grass_regrow_age   = 30.0
+param sheep_eat_gain     = 4
+param sheep_repro_thresh = 20
+param sheep_repro_cost   = 10
+param wolf_kill_gain     = 8
+param wolf_repro_thresh  = 30
+param wolf_repro_cost    = 15
+param wolf_vision        = 5
+param sheep_vision       = 4
+
+agent Sheep {
+  energy = 10
+}
+
+agent Wolf {
+  energy = 20
+}
+
+# Empty cells age toward becoming Grass.
+let cell Empty =
+  seq {
+    set grass_age = field grass_age + 1.0;
+    if field grass_age > grass_regrow_age
+      then become Grass
+      else stay
+  }
+
+# Grass cells reset their age (grass is fresh).
+let cell Grass =
+  seq {
+    set grass_age = 0.0
+  }
+
+let agent Sheep =
+  seq {
+    set energy = self.energy - 1;
+
+    if cell_state == Grass
+      then set energy = self.energy + sheep_eat_gain
+      else stay;
+
+    let wolf_dir   = nearest_agent_of_type_dir Wolf sheep_vision in
+    let wolf_count = agents_of_type_in_radius Wolf sheep_vision in
+    if wolf_count > 0
+      then move ((wolf_dir + 4) mod 8)
+      else move (random_dir ());
+
+    if self.energy > sheep_repro_thresh
+      then seq { set energy = sheep_repro_cost; spawn Sheep }
+      else stay;
+
+    if self.energy <= 0 then die else stay
+  }
+
+let agent Wolf =
+  seq {
+    set energy = self.energy - 1;
+
+    if agents_of_type_in_radius Sheep 0 > 0
+      then seq {
+             kill Sheep;
+             set energy = self.energy + wolf_kill_gain
+           }
+      else stay;
+
+    let prey_dir   = nearest_agent_of_type_dir Sheep wolf_vision in
+    let prey_count = agents_of_type_in_radius Sheep wolf_vision in
+    if prey_count > 0
+      then move prey_dir
+      else move (random_dir ());
+
+    if self.energy > wolf_repro_thresh
+      then seq { set energy = wolf_repro_cost; spawn Wolf }
+      else stay;
+
+    if self.energy <= 0 then die else stay
+  }
+
+init cell =
+  let r = random () in
+  if r < 0.4 then Grass else Empty
+
+init agent Sheep 200
+init agent Wolf 40
