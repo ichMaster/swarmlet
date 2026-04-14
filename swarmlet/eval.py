@@ -149,7 +149,11 @@ def _eval_var(node: A.Var, ctx: ExprContext) -> Any:
     # Check if it's a cell state name
     if name in ctx.cell_states:
         return name  # state value
-    # Check builtins (0-arity only, e.g., STAY, state)
+    # Check 0-arity world builtins (state, cell_state, self, etc.)
+    result = _try_world_builtin(name, [], ctx, node.line)
+    if result is not _SENTINEL:
+        return result
+    # Check builtins (0-arity only, e.g., STAY, forward)
     if name in BUILTINS:
         spec = BUILTINS[name]
         if spec.arity == 0:
