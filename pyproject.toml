@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swarmlet"
-version = "0.1.1"
+version = "0.1.2"
 description = "A small functional language for simulating cellular automata and agent-based swarms on a 2D grid"
 requires-python = ">=3.9"
 license = "MIT"
