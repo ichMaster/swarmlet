@@ -320,6 +320,7 @@ class Parser:
         The tricky part: we need to know when to stop consuming arguments.
         Arguments are postfix expressions (atoms with optional dot access).
         We stop when we see something that can't start an atom.
+        Special case: f () is a zero-arg call (unit argument is discarded).
         """
         expr = self._parse_postfix()
         # If expr is a Var (function name), collect arguments
@@ -327,6 +328,12 @@ class Parser:
             func = expr.name
             args = []
             while self._can_start_atom():
+                # Check for unit () — zero-arg call
+                if self.at("(") and self.pos + 1 < len(self.tokens) and self.tokens[self.pos + 1].kind == ")":
+                    self.eat("(")
+                    self.eat(")")
+                    # () is the unit literal — don't add as argument
+                    continue
                 args.append(self._parse_postfix())
             return A.Call(func=func, args=args, line=expr.line)
         return expr
