@@ -14,10 +14,9 @@ def test_snapshot_error_is_exception():
     assert issubclass(viz.SnapshotError, Exception)
 
 
-def test_stubs_raise_not_implemented():
+def test_render_stubs_raise_not_implemented():
+    """render_frame and FrameSpec are not yet implemented (SWARMLET-033)."""
     import pytest
-    with pytest.raises(NotImplementedError):
-        viz.load_snapshots("anything")
     with pytest.raises(NotImplementedError):
         viz.render_frame(None)
     with pytest.raises(NotImplementedError):

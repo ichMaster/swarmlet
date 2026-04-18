@@ -11,8 +11,9 @@ class SnapshotError(Exception):
 
 
 def load_snapshots(path):
-    """Load snapshots from a JSONL or NPZ file as a list of validated Snapshot objects."""
-    raise NotImplementedError("load_snapshots() will be implemented in SWARMLET-029")
+    """Load snapshots from a JSONL or NPZ file as validated Snapshot objects."""
+    from swarmlet.viz.model import load_snapshots as _impl
+    return _impl(path)
 
 
 def render_frame(snapshot, spec=None):
