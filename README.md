@@ -12,6 +12,14 @@ pip install -e ".[dev]"
 
 Requires Python 3.9+ and numpy.
 
+For visualization (offline rendering of snapshots to MP4/GIF/PNG), install with the optional `[viz]` extras:
+
+```bash
+pip install -e ".[viz]"
+```
+
+This adds matplotlib, imageio (with ffmpeg), and pillow, and enables the `swarmlet-viz` CLI.
+
 ## Quickstart
 
 Run the forest fire model for 100 ticks:

@@ -17,9 +17,15 @@ dev = [
     "pytest",
     "pytest-cov",
 ]
+viz = [
+    "matplotlib>=3.8",
+    "imageio[ffmpeg]>=2.34",
+    "pillow>=10.0",
+]
 
 [tool.setuptools.packages.find]
 include = ["swarmlet*"]
 
 [project.scripts]
 swarmlet = "swarmlet.cli:main"
+swarmlet-viz = "swarmlet.viz.cli:main"
