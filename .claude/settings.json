@@ -48,7 +48,8 @@
       "Skill(implement-phase)",
       "Skill(implement-phase:*)",
       "Edit(/.claude/skills/implement-phase/**)",
-      "mcp__github"
+      "mcp__github",
+      "Bash(swipl --version)"
     ],
     "additionalDirectories": [
       "/Users/Vitalii_Bondarenko2/development/swarmlet/.claude"
