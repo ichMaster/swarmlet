@@ -10,7 +10,7 @@ evaluator : (AST, Context) -> Value
 
 Цей документ — крок за кроком повз кожен `if isinstance` у `eval_expr`. Мета: показати, що інтерпретатор — це не магія, не "чорний ящик", а саме та функція, яку ви могли б написати самі за обідню перерву, якби хтось дав вам AST і сказав "ну добре, поверни значення".
 
-Цей текст — найближчий аналог у нашій серії до [How does Prolog engine work](../../minilog/docs/prolog-engine-explained.md): такий самий механічний, "тицьмо пальцем у код, обходимо всі гілки, ось як це працює".
+Цей текст — найближчий аналог у нашій серії до [How does Prolog engine work](../../../minilog/docs/prolog-engine-explained.md): такий самий механічний, "тицьмо пальцем у код, обходимо всі гілки, ось як це працює".
 
 ---
 
@@ -319,7 +319,7 @@ def _match_case(case: A.MatchCase, subject: Any, ctx: ExprContext) -> bool:
     return True
 ```
 
-`_match_pattern` робить власне порівняння: wildcard завжди пасує, identifier пасує до stringу-стану, number/bool — до literal-значення. Деталі — у [pattern-matching-explained.md](pattern-matching-explained.md), тут нам важливо лише, що evaluator *використовує* цю функцію як предикат.
+`_match_pattern` робить власне порівняння: wildcard завжди пасує, identifier пасує до stringу-стану, number/bool — до literal-значення. Деталі — у [pattern-matching-explained.md](02-pattern-matching-explained.md), тут нам важливо лише, що evaluator *використовує* цю функцію як предикат.
 
 ---
 
@@ -543,7 +543,7 @@ match node:
 
 **Task.** Перепишіть `eval_expr` із `if isinstance` ланцюжка у Python `match`. Порахуйте різницю у кількості рядків. Чи з'явились якісь warning-и від лінтера про non-exhaustive match?
 
-**Hint.** Python `match` — це pattern matching на рівні runtime, не compile-time. Він не дає вам статичної гарантії exhaustivity (на відміну від OCaml). Але візуально код стає набагато чистішим, і це найближче, що Python може дати до OCaml-стилю. Подивіться на [pattern-matching-explained.md](pattern-matching-explained.md) для глибшого порівняння.
+**Hint.** Python `match` — це pattern matching на рівні runtime, не compile-time. Він не дає вам статичної гарантії exhaustivity (на відміну від OCaml). Але візуально код стає набагато чистішим, і це найближче, що Python може дати до OCaml-стилю. Подивіться на [pattern-matching-explained.md](02-pattern-matching-explained.md) для глибшого порівняння.
 
 ---
 
@@ -559,6 +559,6 @@ Evaluator виразів у Swarmlet'і — це функція з двома а
 
 ## Read together
 
-- [SPEC.md](../specification/Swarmlet-SPEC.md) — повна семантика мови
-- [algebraic-data-types.md](algebraic-data-types.md) — Tier 3 sibling: чому AST і runtime values природньо моделюються як ADT
-- [pattern-matching-explained.md](pattern-matching-explained.md) — Tier 1: глибше на тему pattern matching, який ми тут тільки оглядово зачепили
+- [SPEC.md](../../specification/Swarmlet-SPEC.md) — повна семантика мови
+- [algebraic-data-types.md](05-algebraic-data-types.md) — Tier 3 sibling: чому AST і runtime values природньо моделюються як ADT
+- [pattern-matching-explained.md](02-pattern-matching-explained.md) — Tier 1: глибше на тему pattern matching, який ми тут тільки оглядово зачепили

@@ -1,6 +1,6 @@
 # Swarmlet Syntax Cheatsheet
 
-Compact reference. Full semantics in [Swarmlet-SPEC.md](../specification/Swarmlet-SPEC.md).
+Compact reference. Full semantics in [Swarmlet-SPEC.md](../../specification/Swarmlet-SPEC.md).
 
 ## 1. World declaration
 ```

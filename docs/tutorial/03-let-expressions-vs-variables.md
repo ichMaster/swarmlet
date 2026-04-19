@@ -1,6 +1,6 @@
 # `let`-вирази проти змінних: чому `let x = 5 in expr` — це НЕ присвоєння
 
-> Перед цим документом варто прочитати [fp-mental-model.md](fp-mental-model.md), щоб мати загальну картину функціонального мислення. Споріднений Tier 1 документ — [pattern-matching-explained.md](pattern-matching-explained.md), який пояснює `match ... with`. Формальна семантика `let` в Swarmlet — це [SPEC.md секція 7.5](../specification/Swarmlet-SPEC.md#75-let-expressions).
+> Перед цим документом варто прочитати [fp-mental-model.md](01-fp-mental-model.md), щоб мати загальну картину функціонального мислення. Споріднений Tier 1 документ — [pattern-matching-explained.md](02-pattern-matching-explained.md), який пояснює `match ... with`. Формальна семантика `let` в Swarmlet — це [SPEC.md секція 7.5](../../specification/Swarmlet-SPEC.md#75-let-expressions).
 
 Цей документ — про одну маленьку синтаксичну конструкцію, яка вводить в оману майже всіх, хто приходить у функціональне програмування з Python, Java або SQL. Конструкція виглядає як знайома стара подруга — присвоєння змінній. Але вона нею не є. І коли ви це відчуєте на кінчиках пальців, у вас несподівано зміняться інтуїції про багато речей: про рефакторинг, про композицію, про те, як читати чужий код.
 
@@ -227,7 +227,7 @@ print(x)        # все ще 1
 
 ## Walkthrough: `let`-ланцюжок у Gray-Scott
 
-Тепер повернімось до того лякаючого коду з семи `let` підряд і розберімо його повільно. Ось він іще раз, з [`gray_scott.swl`](../swarmlet/examples/gray_scott.swl) (див. також [SPEC.md секція 11.5](../specification/Swarmlet-SPEC.md#115-gray-scott)):
+Тепер повернімось до того лякаючого коду з семи `let` підряд і розберімо його повільно. Ось він іще раз, з [`gray_scott.swl`](../swarmlet/examples/gray_scott.swl) (див. також [SPEC.md секція 11.5](../../specification/Swarmlet-SPEC.md#115-gray-scott)):
 
 ```swl
 let cell _ =
@@ -575,4 +575,4 @@ let cell Cell =
 
 Якщо ви до цього писали Python без перезапису локальних змінних, ви вже інтуїтивно знаєте, що таке `let`. Тепер у вас є явна назва і явний синтаксис для цього патерну. І коли ви наступного разу побачите сім `let`-ів підряд у Swarmlet або OCaml коді — ви прочитаєте їх як рецепт, а не як головоломку.
 
-> Споріднені документи: [fp-mental-model.md](fp-mental-model.md) (загальна картина FP), [pattern-matching-explained.md](pattern-matching-explained.md) (про `match ... with`). Формальна семантика `let` — [SPEC.md секція 7.5](../specification/Swarmlet-SPEC.md#75-let-expressions). Приклад Gray-Scott з його `let`-ланцюжком — [SPEC.md секція 11.5](../specification/Swarmlet-SPEC.md#115-gray-scott).
+> Споріднені документи: [fp-mental-model.md](01-fp-mental-model.md) (загальна картина FP), [pattern-matching-explained.md](02-pattern-matching-explained.md) (про `match ... with`). Формальна семантика `let` — [SPEC.md секція 7.5](../../specification/Swarmlet-SPEC.md#75-let-expressions). Приклад Gray-Scott з його `let`-ланцюжком — [SPEC.md секція 11.5](../../specification/Swarmlet-SPEC.md#115-gray-scott).

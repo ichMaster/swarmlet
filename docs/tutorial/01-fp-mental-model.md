@@ -488,6 +488,6 @@ def sum_squares(lst):
 
 ## Куди далі
 
-- [Swarmlet специфікація](../specification/Swarmlet-SPEC.md) — формальний опис мови, граматика, семантика, built-ins.
-- [pattern-matching-explained.md](pattern-matching-explained.md) — наступний документ Phase 11, який поглиблено розбирає `match ... with`, or-patterns, `when`-guards, і чому це не те саме, що `switch/case` з імперативних мов.
-- [let-expressions-vs-variables.md](let-expressions-vs-variables.md) — детально про `let ... in ...`, scoping, чому це не "присвоювання", і як data-flow ланцюги з `let` замінюють імперативні послідовності statement-ів.
+- [Swarmlet специфікація](../../specification/Swarmlet-SPEC.md) — формальний опис мови, граматика, семантика, built-ins.
+- [pattern-matching-explained.md](02-pattern-matching-explained.md) — наступний документ Phase 11, який поглиблено розбирає `match ... with`, or-patterns, `when`-guards, і чому це не те саме, що `switch/case` з імперативних мов.
+- [let-expressions-vs-variables.md](03-let-expressions-vs-variables.md) — детально про `let ... in ...`, scoping, чому це не "присвоювання", і як data-flow ланцюги з `let` замінюють імперативні послідовності statement-ів.

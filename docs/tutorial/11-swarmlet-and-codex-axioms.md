@@ -109,7 +109,7 @@ def solve(goal, kb, subst, depth, max_depth):
 
 Дві функції зовні робить різні речі — одна обчислює вираз, друга шукає докази. Усередині — той самий патерн: розглянь тип AST-вузла, обери відповідний обробник, рекурсивно піди вглиб. Codex axioms матиме те саме ядро, просто з іншими типами вузлів.
 
-Подивіться детальніше у [expression-evaluator-explained.md](expression-evaluator-explained.md) — там той самий патерн розписаний для Swarmlet окремо.
+Подивіться детальніше у [expression-evaluator-explained.md](04-expression-evaluator-explained.md) — там той самий патерн розписаний для Swarmlet окремо.
 
 ### Механізм 2: pattern matching як ядро диспетчу
 
@@ -134,7 +134,7 @@ def _match_pattern(pattern: A.Pattern, subject: Any) -> bool:
 
 У Прологу той самий принцип, але потужніший — **уніфікація** вміє не тільки порівнювати, а й одночасно **знаходити підстановку**, яка робить два терми однаковими. Це той же `_match_pattern`, який раптом може повернути не тільки `True/False`, а ще й словник `{?x: значення, ?y: значення}`. Коли ви будете писати Codex axioms, у вас, найімовірніше, теж буде форма pattern matching — і питання буде в одному: "Чи будуть у моїх патернах змінні?". Якщо так — ви будуєте Prolog-like систему. Якщо ні — Swarmlet-like.
 
-Глибше про цей перехід — у [pattern-matching-explained.md](pattern-matching-explained.md).
+Глибше про цей перехід — у [pattern-matching-explained.md](02-pattern-matching-explained.md).
 
 ### Механізм 3: чисті функції і незмінні контексти
 
@@ -190,7 +190,7 @@ def child(self, **overrides) -> ExprContext:
 
 Це і є forward chaining. Дослівно. Cellular automaton — це **forward-chaining engine з 2D-структурою фактів**. Кожна клітинка — це факт `cell(x, y, state)`. Кожне cell rule — це Horn clause виду `cell(x, y, NewState) :- cell(x, y, OldState), neighbors(...)`. Кожен tick — це один прохід forward chaining по всім фактам.
 
-Чому це корисно знати? Бо коли ви будете будувати Codex axioms з forward chaining (а аксіоми майже завжди працюють forward), ви зрозумієте, що **архітектурно це той самий движок, що Swarmlet**, тільки з абстрактнішими "клітинами" (предмет аксіоми замість координат). Можна буквально перевикористати інтуїцію tick-а: phase 1 — обчислити всі застосовні аксіоми; phase 2 — застосувати атомарно. Це той самий два-фазний детермінований tick, що описаний у [tick-as-snapshot-transformation.md](tick-as-snapshot-transformation.md).
+Чому це корисно знати? Бо коли ви будете будувати Codex axioms з forward chaining (а аксіоми майже завжди працюють forward), ви зрозумієте, що **архітектурно це той самий движок, що Swarmlet**, тільки з абстрактнішими "клітинами" (предмет аксіоми замість координат). Можна буквально перевикористати інтуїцію tick-а: phase 1 — обчислити всі застосовні аксіоми; phase 2 — застосувати атомарно. Це той самий два-фазний детермінований tick, що описаний у [tick-as-snapshot-transformation.md](07-tick-as-snapshot-transformation.md).
 
 ---
 
@@ -212,7 +212,7 @@ def child(self, **overrides) -> ExprContext:
 
 У Swarmlet — просто `count(Tree)`. Але семантично це те саме обчислення. Codex axioms майже напевно матиме якусь форму "перерахуй усі об'єкти, що задовольняють умову" — і коли ви будете її проєктувати, корисно тримати в голові, що це той самий `count` з нестандартним фільтром.
 
-Цей зв'язок добре підкреслює одну важливу річ: **алгебраїчні типи у Swarmlet** ([algebraic-data-types.md](algebraic-data-types.md)) — це не що інше, як скінченна множина атомів, до яких можна застосовувати pattern matching. У Прологу ці атоми не оголошуються — вони просто існують. У Swarmlet їх треба оголосити через `state Tree | Fire | Empty;`. У Codex axioms вибір залежатиме від того, наскільки строго ви хочете типізувати — обидва варіанти мають свої плюси.
+Цей зв'язок добре підкреслює одну важливу річ: **алгебраїчні типи у Swarmlet** ([algebraic-data-types.md](05-algebraic-data-types.md)) — це не що інше, як скінченна множина атомів, до яких можна застосовувати pattern matching. У Прологу ці атоми не оголошуються — вони просто існують. У Swarmlet їх треба оголосити через `state Tree | Fire | Empty;`. У Codex axioms вибір залежатиме від того, наскільки строго ви хочете типізувати — обидва варіанти мають свої плюси.
 
 ---
 
@@ -240,11 +240,11 @@ def child(self, **overrides) -> ExprContext:
 
 ## Посилання на споріднені проєкти
 
-- **minilog** — `/Users/Vitalii_Bondarenko2/development/minilog/`. Особливо корисний документ — [`docs/prolog-engine-explained.md`](../../minilog/docs/prolog-engine-explained.md), який описує SLD-resolution крок за кроком. Якщо ви дивитеся на Codex axioms через призму "як це би виглядало у Prologу", цей документ — найкоротший шлях оновити модель в голові.
+- **minilog** — `/Users/Vitalii_Bondarenko2/development/minilog/`. Особливо корисний документ — [`docs/prolog-engine-explained.md`](../../../minilog/docs/prolog-engine-explained.md), який описує SLD-resolution крок за кроком. Якщо ви дивитеся на Codex axioms через призму "як це би виглядало у Prologу", цей документ — найкоротший шлях оновити модель в голові.
 - **Codex axioms** — третій проєкт у тій самій родині. Якщо коли цей текст пишеться його ще немає — він обов'язково з'явиться. Семантика аксіом — найімовірніше форма forward chaining або hybrid (forward + backward). Архітектурне ядро (лексер → парсер → AST → analyzer → evaluator) можна перевикористати майже без змін.
 - **Swarmlet** — цей проєкт. Сильна сторона — **2D детермінований tick з конфліктами**. Слабка — **немає змінних у патернах**. Codex axioms, найімовірніше, наслідуватиме від Swarmlet функціональний стиль і від minilog — змінні-в-патернах.
 
-Сусідній документ цієї ж серії — [from-swarmlet-to-protelis.md](from-swarmlet-to-protelis.md) — показує, як Swarmlet проєктується в інший напрямок: на дослідницьку мову Protelis. Цікавий контраст: minilog — родич "знизу" (простіша Horn-mechanic), Protelis — родич "збоку" (близький домен, інший формалізм).
+Сусідній документ цієї ж серії — [from-swarmlet-to-protelis.md](10-from-swarmlet-to-protelis.md) — показує, як Swarmlet проєктується в інший напрямок: на дослідницьку мову Protelis. Цікавий контраст: minilog — родич "знизу" (простіша Horn-mechanic), Protelis — родич "збоку" (близький домен, інший формалізм).
 
 ---
 

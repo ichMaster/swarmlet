@@ -8,7 +8,7 @@
 
 Це і є intent pattern. Цей документ пояснює, чому без нього не можна було б побудувати детермінований движок, як він реалізований у файлі [`swarmlet/engine.py`](../swarmlet/engine.py), і чим він схожий на половину архітектурних патернів, які ви вже знаєте з імперативного світу — Redux, transactions, event sourcing, Command pattern, CRDT.
 
-Перед тим як занурюватися, рекомендую прочитати [SPEC.md секція 2.3](../specification/Swarmlet-SPEC.md#23-tick) (опис тіка і порядок резолюції конфліктів) і [SPEC.md секція 7.3](../specification/Swarmlet-SPEC.md#73-agent-rule-evaluation) (як саме агентські правила перетворюються на інтенти). Цей документ — комплементарний до них: SPEC говорить **що**, тут пояснюється **чому**.
+Перед тим як занурюватися, рекомендую прочитати [SPEC.md секція 2.3](../../specification/Swarmlet-SPEC.md#23-tick) (опис тіка і порядок резолюції конфліктів) і [SPEC.md секція 7.3](../../specification/Swarmlet-SPEC.md#73-agent-rule-evaluation) (як саме агентські правила перетворюються на інтенти). Цей документ — комплементарний до них: SPEC говорить **що**, тут пояснюється **чому**.
 
 ---
 
@@ -243,7 +243,7 @@ def _apply_intents(self, intents):
 
 Коли всі інтенти лежать перед нами у списку, **резолюція конфліктів стає тривіальною**. Хочемо щоб тільки один вовк зайняв клітинку? Будуємо `move_targets: {(x,y) -> [movers]}`, для кожного цільового місця обираємо одного переможця через `rng.integers`, інші залишаються на місці. Хочемо щоб два депозити феромону складалися? Просто `+=` всередині четвертого циклу. Хочемо щоб смерть прийшла після спавну? Робимо смерть кроком 7, спавн кроком 6.
 
-Порядок пріоритетів зафіксований у [SPEC.md секція 2.3](../specification/Swarmlet-SPEC.md#23-tick) і у [`CLAUDE.md`](../CLAUDE.md):
+Порядок пріоритетів зафіксований у [SPEC.md секція 2.3](../../specification/Swarmlet-SPEC.md#23-tick) і у [`CLAUDE.md`](../../CLAUDE.md):
 
 > movement > field writes > deposits > kill > spawn > death
 
@@ -404,7 +404,7 @@ seq {
 
 ### Quirk зі вбивством
 
-З [SPEC.md секція 2.3](../specification/Swarmlet-SPEC.md#23-tick):
+З [SPEC.md секція 2.3](../../specification/Swarmlet-SPEC.md#23-tick):
 
 > If two agents both attempt to kill the same target, one succeeds and the other's `kill` is silently dropped (but its energy gain, computed earlier in its action body, is NOT undone — see section 12.4 for the documented quirk).
 
@@ -477,4 +477,4 @@ Intent pattern у Swarmlet — це не оптимізація і не cosmetic
 
 Якщо вам колись доведеться будувати симулятор, ігровий движок, або взагалі будь-яку систему з паралельними змінами стану — згадайте intent pattern. Це маленький конструктивний крок, який віддає вам контроль над усім, що раніше здавалося хаосом.
 
-Дотичні документи: [SPEC.md секція 2.3](../specification/Swarmlet-SPEC.md#23-tick), [SPEC.md секція 7.3](../specification/Swarmlet-SPEC.md#73-agent-rule-evaluation), `tick-as-snapshot-transformation.md` (Tier 2 sibling, що пояснює тік як перетворення снапшота).
+Дотичні документи: [SPEC.md секція 2.3](../../specification/Swarmlet-SPEC.md#23-tick), [SPEC.md секція 7.3](../../specification/Swarmlet-SPEC.md#73-agent-rule-evaluation), `07-tick-as-snapshot-transformation.md` (Tier 2 sibling, що пояснює тік як перетворення снапшота).

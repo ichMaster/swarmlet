@@ -4,7 +4,7 @@
 
 Якщо ви прийшли у Swarmlet із серйозною ціллю — миттєві мережі, сенсорні системи, drone swarms, miltech-застосування, — то цей документ описує природний наступний крок після того, як ви опанували Swarmlet. Не "забудьте Swarmlet, переходьте на справжнє", а "ось чим Swarmlet схожий на справжнє і ось у яких ключових місцях він свідомо спрощений".
 
-Цей текст більш технічний за решту документації — бо тема справді більш просунута. Ми не будемо повторювати азів функціонального програмування. Припускаємо, що ви вже прочитали [intent-pattern-explained.md](intent-pattern-explained.md) і розумієте, як працює tick у Swarmlet.
+Цей текст більш технічний за решту документації — бо тема справді більш просунута. Ми не будемо повторювати азів функціонального програмування. Припускаємо, що ви вже прочитали [intent-pattern-explained.md](06-intent-pattern-explained.md) і розумієте, як працює tick у Swarmlet.
 
 Якщо ви прийшли сюди із чистої цікавості, без специфічного miltech-фокусу, документ все одно буде корисним. Aggregate programming — це окремо цікава галузь computer science, що поєднує теорію типів, розподілені обчислення і теорію категорій. Навіть якщо ви ніколи не запустите жодного дрона, розуміння цієї парадигми збагачує ваш arsenal способів думати про системи.
 
@@ -403,4 +403,4 @@ Field calculus — формальна основа aggregate programming. Чот
 
 Swarmlet чесно не вчить багатьох речей — мережевих відмов, motion planning, безпеки, синхронізації часу. Він — pedagogical мова, не production-движок. Сприймайте його як такий і йдіть далі.
 
-Дивіться також: [swarmlet-and-codex-axioms.md](swarmlet-and-codex-axioms.md) — про те, як Swarmlet вписується у ширший Tier 4-контекст, і [intent-pattern-explained.md](intent-pattern-explained.md) — про те, як Swarmlet реалізує детермінізм через intent-pattern, корисний нюанс перед переходом у aggregate programming.
+Дивіться також: [swarmlet-and-codex-axioms.md](11-swarmlet-and-codex-axioms.md) — про те, як Swarmlet вписується у ширший Tier 4-контекст, і [intent-pattern-explained.md](06-intent-pattern-explained.md) — про те, як Swarmlet реалізує детермінізм через intent-pattern, корисний нюанс перед переходом у aggregate programming.

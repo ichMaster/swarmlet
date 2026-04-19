@@ -158,7 +158,7 @@ print(None)
 
 **`swarmlet/analyzer.py`**. Аналізатор створює `Analyzer()`-інстанс, накопичує помилки у `self.errors`, і кидає виняток у кінці. Так, всередині є мутація `self.errors.append(...)`. Але — і це ключовий момент — публічний контракт `analyze(program) -> None | raises` чистий: один і той самий вхід дасть одну й ту саму поведінку. Внутрішня мутація локальна; вона не "тікає" назовні. Для зовнішнього коду analyzer — чорна скринька, яка детерміновано приймає AST і повертає або тишу, або `SwarmletStaticError`.
 
-**`swarmlet/eval.py`**. Тут найцікавіше. `eval_expr(expr, env, ctx)` приймає вираз AST, environment і evaluation context — і повертає **значення**. Він *не* записує нічого у world. Він *не* модифікує environment (зробивши `let x = 1 in body`, evaluator створює *нове* environment, в якому є `x`, і обчислює `body` у ньому — старе залишається недоторканим). Action evaluator (`eval_action`) теж нічого не виконує "по-справжньому": він повертає `Intent` — описову структуру намірів. Це принципово інша річ — про неї детально у [intent-pattern-explained.md](intent-pattern-explained.md).
+**`swarmlet/eval.py`**. Тут найцікавіше. `eval_expr(expr, env, ctx)` приймає вираз AST, environment і evaluation context — і повертає **значення**. Він *не* записує нічого у world. Він *не* модифікує environment (зробивши `let x = 1 in body`, evaluator створює *нове* environment, в якому є `x`, і обчислює `body` у ньому — старе залишається недоторканим). Action evaluator (`eval_action`) теж нічого не виконує "по-справжньому": він повертає `Intent` — описову структуру намірів. Це принципово інша річ — про неї детально у [intent-pattern-explained.md](06-intent-pattern-explained.md).
 
 ### Контрольовано-нечисті модулі
 
@@ -178,7 +178,7 @@ def __init__(self, program, seed=0, params=None):
 
 Але тут є тонкість, яка все міняє: **публічна поведінка `World` детермінована**. Якщо ви створите два `World` з одним і тим самим program і seed і прокрутите їх однакову кількість тіків — отримаєте однакові snapshot-и. Внутрішня мутація обмежена і контрольована. Зовнішній спостерігач не бачить різниці між "World, який мутує себе" і "World, який повертає новий World". Ця властивість має ім'я: **observational purity** — функція може мати ефекти всередині, але якщо назовні її поведінка чиста, для більшості практичних цілей вона еквівалентна чистій.
 
-Чому не зробили все по-справжньому імутабельно? Бо це гра з продуктивністю. Копіювати numpy-масив `1000x1000` на кожному тіку — повільно. Тримати один масив і переписувати його in-place — швидко. Гарантія детермінізму утримується через дисципліну: всі мутації відбуваються **тільки** у `step()`, і завжди в одному й тому самому порядку. Детально про це — у [tick-as-snapshot-transformation.md](tick-as-snapshot-transformation.md).
+Чому не зробили все по-справжньому імутабельно? Бо це гра з продуктивністю. Копіювати numpy-масив `1000x1000` на кожному тіку — повільно. Тримати один масив і переписувати його in-place — швидко. Гарантія детермінізму утримується через дисципліну: всі мутації відбуваються **тільки** у `step()`, і завжди в одному й тому самому порядку. Детально про це — у [tick-as-snapshot-transformation.md](07-tick-as-snapshot-transformation.md).
 
 **`swarmlet/snapshot.py`**. Має дві функції: одна читає стан world (чиста — просто збирає поточний стан у JSON-сумісний словник), інша **пише** його у файл (нечиста — `open(path, "w")` і `f.write(...)`). Module — змішаний. Внутрішня функція `_world_to_dict` чиста; обгортки `write_jsonl` і `write_npz` — ні.
 
@@ -513,6 +513,6 @@ Swarmlet — приклад такої архітектури. Lexer, parser, an
 Чистота — це межа. Питання тільки в тому, де ви її проведете і хто її буде стерегти.
 
 Дотичні документи:
-- [tick-as-snapshot-transformation.md](tick-as-snapshot-transformation.md) — як engine.py перетворює "контрольовану нечистоту" на детермінізм
-- [intent-pattern-explained.md](intent-pattern-explained.md) — чому action evaluator повертає `Intent`, а не виконує дії
-- [recursion-vs-iteration.md](recursion-vs-iteration.md) — пов'язана сторона функціонального стилю: відсутність mutable loop
+- [tick-as-snapshot-transformation.md](07-tick-as-snapshot-transformation.md) — як engine.py перетворює "контрольовану нечистоту" на детермінізм
+- [intent-pattern-explained.md](06-intent-pattern-explained.md) — чому action evaluator повертає `Intent`, а не виконує дії
+- [recursion-vs-iteration.md](09-recursion-vs-iteration.md) — пов'язана сторона функціонального стилю: відсутність mutable loop
