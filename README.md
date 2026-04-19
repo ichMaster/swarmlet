@@ -6,13 +6,17 @@ Swarmlet borrows its world model from NetLogo, its syntax from OCaml/ML (`let`, 
 
 ## Installation
 
+Requires Python 3.9+ and numpy. On systems with an externally-managed Python (e.g. Homebrew, Debian/Ubuntu with PEP 668), install into a virtual environment:
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-Requires Python 3.9+ and numpy.
+If your Python install permits global `pip install`, you can skip the venv step.
 
-For visualization (offline rendering of snapshots to MP4/GIF/PNG), install with the optional `[viz]` extras:
+For visualization (offline rendering of snapshots to MP4/GIF/PNG), add the optional `[viz]` extras:
 
 ```bash
 pip install -e ".[viz]"
@@ -100,7 +104,36 @@ The **determinism harness** (`tests/integration/test_determinism.py`) verifies t
 
 ## Visualization
 
-The interpreter is a pure engine -- it does not draw anything. Visualization is a separate consumer of snapshot data (`swarmlet-viz`, planned for Stage 2).
+The interpreter is a pure engine — it does not draw anything. A separate offline renderer, `swarmlet-viz`, consumes the JSONL/NPZ snapshot files produced by `swarmlet run --out` and produces MP4 videos, animated GIFs, single-frame PNGs, and contact sheets.
+
+```
+swarmlet run  ─►  snapshots.jsonl  ─►  swarmlet-viz render  ─►  out.mp4 / .gif / .png
+```
+
+Quickstart:
+
+```bash
+pip install -e ".[viz]"
+swarmlet run swarmlet/examples/forest_fire.swl --ticks 1000 --seed 42 --out fire.jsonl
+swarmlet-viz render fire.jsonl --preset forest_fire --out fire.mp4
+```
+
+Built-in presets are available for all five reference examples: `forest_fire`, `ants`, `boids`, `wolf_sheep`, `gray_scott`. See [docs/viz-usage.md](docs/viz-usage.md) for all CLI flags, preset details, and recipes.
+
+### Gallery
+
+Each image below is a contact sheet of 12 evenly-spaced frames from a 200-tick seeded run.
+
+| | |
+|---|---|
+| Forest Fire | Ants |
+| ![forest fire](swarmlet/examples/gallery/forest_fire_sheet.png) | ![ants](swarmlet/examples/gallery/ants_sheet.png) |
+| Boids | Wolf-Sheep |
+| ![boids](swarmlet/examples/gallery/boids_sheet.png) | ![wolf-sheep](swarmlet/examples/gallery/wolf_sheep_sheet.png) |
+| Gray-Scott | |
+| ![gray-scott](swarmlet/examples/gallery/gray_scott_sheet.png) | |
+
+An interactive web viewer (Stage 2B) is planned for future work — it will consume the same snapshot files as this offline renderer.
 
 ## Specification
 

@@ -7,8 +7,12 @@ A 5-minute walkthrough from install to running your first simulation.
 ```bash
 git clone https://github.com/ichMaster/swarmlet.git
 cd swarmlet
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+The venv step is required on systems with an externally-managed Python (Homebrew, Debian/Ubuntu, etc.) and recommended everywhere else. Re-activate with `source .venv/bin/activate` in new shells, or invoke the CLI directly as `.venv/bin/swarmlet ...`.
 
 Verify:
 
@@ -95,8 +99,21 @@ snap = world.snapshot()
 print(f"Tick {snap['tick']}, agents: {len(snap['agents'])}")
 ```
 
+## 7. Visualize a run
+
+Install the optional `[viz]` extras and render a JSONL snapshot file:
+
+```bash
+pip install -e ".[viz]"
+swarmlet run swarmlet/examples/forest_fire.swl --ticks 400 --seed 42 --out fire.jsonl
+swarmlet-viz render fire.jsonl --preset forest_fire --out fire.mp4
+```
+
+See [viz-usage.md](viz-usage.md) for all CLI flags, presets, and recipes.
+
 ## Next steps
 
 - Read the [API reference](api.md) for full documentation
 - Explore the [five reference examples](../swarmlet/examples/)
 - Read the [language specification](../specification/Swarmlet-SPEC.md)
+- See the [visualizer reference](viz-usage.md) for rendering recipes
