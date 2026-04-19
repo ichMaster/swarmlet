@@ -18,11 +18,11 @@ def load_snapshots(path):
 
 def render_frame(snapshot, spec=None):
     """Render a single snapshot to a matplotlib Figure according to spec."""
-    raise NotImplementedError("render_frame() will be implemented in SWARMLET-033")
+    from swarmlet.viz.render.composite import render_frame as _impl
+    return _impl(snapshot, spec)
 
 
-class FrameSpec:
-    """Declarative specification for how to render a frame (layers, colormaps, overlays)."""
-
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError("FrameSpec will be implemented in SWARMLET-033")
+def FrameSpec(*args, **kwargs):
+    """Factory for the FrameSpec dataclass (imported lazily to avoid matplotlib at import)."""
+    from swarmlet.viz.render.composite import FrameSpec as _FrameSpec
+    return _FrameSpec(*args, **kwargs)
